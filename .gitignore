@@ -34,3 +34,5 @@ graphsample
 *.exe
 *.out
 *.app
+
+test_*
