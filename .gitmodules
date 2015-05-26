@@ -1,0 +1,3 @@
+[submodule "third-party/khmer"]
+	path = third-party/khmer
+	url = https://github.com/dib-lab/khmer.git
