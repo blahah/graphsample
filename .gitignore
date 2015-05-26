@@ -2,6 +2,10 @@
 *~
 *#
 
+# Compiled binary
+bin/
+graphsample
+
 # Compiled Object files
 *.slo
 *.lo
