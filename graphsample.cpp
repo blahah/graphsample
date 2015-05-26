@@ -17,7 +17,8 @@ Hashbits* new_hashbits() {
   // for now we set in stone, min_tables = 2 and hashsize = 4e9
   // we therefore want two primes > 4e9,
   // the smallest of which are 4e9+7 and 4e9+9
-  std::vector<long long unsigned int> sizes = {4e9+7, 4e9+9};
+  std::vector<HashIntoType> sizes =
+    {static_cast<HashIntoType>(4e9+7), static_cast<HashIntoType>(4e9+9)};
 
   // kmer size
   int k = 31;
