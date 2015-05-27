@@ -1,35 +1,20 @@
+#include "partition.h"
+
 #include <random>
-#include <string>
 #include <sstream>
 #include <errno.h>
 
-#include "hashbits.hh"
-#include "subset.hh"
 #include "read_parsers.hh"
 
-namespace khmer {
-
-class Part : public SubsetPartition {
-public:
-  Part(Hashtable * ht);
-  size_t output_sampled_partitions(const std::string &infilename,
-                            const std::string &outputfile);
-};
-
-}
-
-// #define VALIDATE_PARTITIONS
-
 using namespace khmer;
-using namespace khmer:: read_parsers;
+using namespace khmer::read_parsers;
 using namespace std;
-Part::Part(Hashtable * ht) : SubsetPartition(ht) {
 
-}
-
-size_t Part::output_sampled_partitions(
-    const std::string	&infilename,
-    const std::string	&outputfile) {
+size_t Partition::output_sampled_partitions(
+    const string &left,
+    const string &right,
+    const string &outputfile,
+    const double rate) {
 
   IParser* parser = IParser::get_parser(infilename);
   ofstream outfile(outputfile.c_str());
@@ -41,15 +26,14 @@ size_t Part::output_sampled_partitions(
   //
   // iterate through all partitions and sample them probabilistically
   //
-  std::default_random_engine generator;
-  std::uniform_real_distribution<double> distribution(0.0, 1.0);
-  double cutoff = 0.2;
+  default_random_engine generator;
+  uniform_real_distribution<double> distribution(0.0, 1.0);
 
   for(ReversePartitionMap::iterator it = reverse_pmap.begin();
       it != reverse_pmap.end(); ++it) {
     double p = distribution(generator);
 
-    if (p > cutoff) {
+    if (p > rate) {
       // not in the sample
       continue;
     }
@@ -66,8 +50,10 @@ size_t Part::output_sampled_partitions(
     cout << "partition " << p << " is in sample" << endl;
   }
 
-  Read read;
-  string seq;
+  Read read_left;
+  Read read_right
+  string seq_left;
+  string seq_right;
 
   HashIntoType kmer = 0;
 
