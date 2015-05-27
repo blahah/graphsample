@@ -35,4 +35,4 @@ graphsample
 *.out
 *.app
 
-test_*
+test*_*
