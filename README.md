@@ -7,3 +7,17 @@ Taking a subsample from a FASTQ can lead to poor coverage of some regions in the
 `graphsample` addresses this problem by building a de-Bruijn graph from the reads, identifying all the components (connected sub-graphs), and randomly sampling those components. It outputs the reads that belong to the sampled components.
 
 What's the point? Glad you asked! `graphsample` allows you to take a small subsample from a large set of reads, and use the subsample to optimise the parameters of any tools and algorithms you want to run on the full set.
+
+## Compiling
+
+```bash
+$ git clone --recursive https://github.com/Blahah/graphsample.git
+$ cd graphsample
+$ make
+```
+
+## Running
+
+```bash
+$ bin/graphsample --help
+```
