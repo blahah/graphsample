@@ -13,13 +13,14 @@ using namespace std;
 size_t Partition::output_sampled_partitions(
     const string &left,
     const string &right,
-    const string &outputfile,
-    const double rate) {
+    const string &out_left,
+    const string &out_right,
+    double rate) {
 
-  IParser* parser = IParser::get_parser(infilename);
-  ofstream outfile(outputfile.c_str());
-
-  unsigned int min_kmerset_size = 3;
+  IParser* left_parser = IParser::get_parser(left);
+  IParser* right_parser = IParser::get_parser(right);
+  ofstream left_outstream(out_left.c_str());
+  ofstream right_outstream(out_right.c_str());
 
   PartitionSet partitions;
 
@@ -31,6 +32,7 @@ size_t Partition::output_sampled_partitions(
 
   for(ReversePartitionMap::iterator it = reverse_pmap.begin();
       it != reverse_pmap.end(); ++it) {
+
     double p = distribution(generator);
 
     if (p > rate) {
@@ -38,24 +40,17 @@ size_t Partition::output_sampled_partitions(
       continue;
     }
 
-    PartitionPtrSet *kmerset = it->second;
-
-    if (kmerset->size() >= min_kmerset_size) {
-      partitions.insert(it->first);
-      cout << "including partition " << it->first << " in sample\n";
-    }
-  }
-
-  for(auto p : partitions) {
-    cout << "partition " << p << " is in sample" << endl;
+    partitions.insert(it->first);
+    cout << "including partition " << it->first << " in sample" << endl;
   }
 
   Read read_left;
-  Read read_right
+  Read read_right;
   string seq_left;
   string seq_right;
 
-  HashIntoType kmer = 0;
+  HashIntoType kmer_left = 0;
+  HashIntoType kmer_right = 0;
 
   const unsigned int ksize = _ht->ksize();
 
@@ -63,58 +58,88 @@ size_t Partition::output_sampled_partitions(
   // go through all the reads, take those with assigned partitions
   // and output them only if their partition was in the subsample
   //
-  while(!parser->is_complete()) {
-    read = parser->get_next_read();
-    seq = read.sequence;
+  while(!left_parser->is_complete()) {
+    if (right_parser->is_complete()) {
+      cerr << "ERROR: read files have different numbers of reads" << endl;
+      exit(1);
+    }
+    read_left = left_parser->get_next_read();
+    read_right = right_parser->get_next_read();
+    seq_left = read_left.sequence;
+    seq_right = read_right.sequence;
 
-    if (_ht->check_and_normalize_read(seq)) {
-      const char * kmer_s = seq.c_str();
+    if (_ht->check_and_normalize_read(seq_left) &&
+        _ht->check_and_normalize_read(seq_right)) {
+      const char * kmer_s_left = seq_left.c_str();
+      const char * kmer_s_right = seq_right.c_str();
 
-      bool found_tag = false;
-      for (unsigned int i = 0; i < seq.length() - ksize + 1; i++) {
-        kmer = _hash(kmer_s + i, ksize);
+      bool found_tags = false;
 
-        // is this a known tag?
-        if (set_contains(partition_map, kmer)) {
-          found_tag = true;
+      for (unsigned int i = 0; i < seq_left.length() - ksize + 1; i++) {
+        kmer_left = _hash(kmer_s_left + i, ksize);
+
+        // are these both known tags
+        if (set_contains(partition_map, kmer_left)) {
+          found_tags = true;
           break;
         }
       }
 
-      PartitionID partition_id = 0;
-      if (found_tag) {
-        PartitionID * partition_p = partition_map[kmer];
-        if (partition_p == NULL) {
-          partition_id = 0;
-        } else {
-          partition_id = *partition_p;
+      for (unsigned int i = 0; i < seq_right.length() - ksize + 1; i++) {
+        kmer_right = _hash(kmer_s_right + i, ksize);
+
+        // are these both known tags
+        if (set_contains(partition_map, kmer_right)) {
+          found_tags = true;
+          break;
         }
       }
 
-      if (partition_id == 0) {
-        continue;
+      PartitionID * partition_left;
+      PartitionID * partition_right;
+      if (found_tags) {
+        partition_left = partition_map[kmer_left];
+        partition_right = partition_map[kmer_right];
+        if (partition_left == NULL || partition_right == NULL) {
+          continue;
+        }
       }
 
       // only write out if partition is in the sample
-      PartitionSet::iterator it = partitions.find(partition_id);
-      if (it != partitions.end()) {
-        // cout << "read in sampled partition " << partition_id << " (it = " << *it << ")" << endl;
-        if (read.quality.length()) { // FASTQ
-          outfile << "@" << read.name << "\t" << partition_id
-                  << "\n";
-          outfile << seq << "\n+\n";
-          outfile << read.quality << "\n";
+      bool leftfound = partitions.find(*partition_left) != partitions.end();
+      bool rightfound = partitions.find(*partition_right) != partitions.end();
+
+      if (leftfound || rightfound) {
+
+        if (read_left.quality.length()) { // FASTQ
+
+          left_outstream << "@" << read_left.name << "\t" << partition_left;
+          left_outstream << endl << seq_left << endl << '+' << endl;
+          left_outstream << read_left.quality << endl;
+
+          right_outstream << "@" << read_right.name << "\t" << partition_right;
+          right_outstream << endl << seq_right << endl << '+' << endl;
+          right_outstream << read_right.quality << endl;
+
         } else {  // FASTA
-          outfile << ">" << read.name << "\t" << partition_id;
-          outfile << "\n" << seq << "\n";
+
+          left_outstream << ">" << read_left.name << "\t" << partition_left;
+          left_outstream << endl << seq_left << endl;
+
+          right_outstream << ">" << read_right.name << "\t" << partition_right;
+          right_outstream << endl << seq_right << endl;
+
         }
       }
 
     }
   }
 
-  delete parser;
-  parser = NULL;
+
+  delete left_parser;
+  left_parser = NULL;
+  delete right_parser;
+  right_parser = NULL;
 
   return partitions.size();
 }
