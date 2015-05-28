@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <chrono>
 #include <unordered_map>
+#include <algorithm>
 
 using namespace khmer;
 using namespace khmer::read_parsers;
@@ -39,7 +40,8 @@ size_t Partition::output_sampled_partitions(
   default_random_engine generator(seed);
   uniform_real_distribution<double> distribution(0.0, 1.0);
 
-  unordered_map <PartitionID, CountingHash*> countinghash_map;
+  unordered_map <PartitionID, CountingHash> countinghash_map;
+  HashIntoType hashsize = 1e5+3;
 
   for(ReversePartitionMap::iterator it = reverse_pmap.begin();
       it != reverse_pmap.end(); ++it) {
@@ -51,11 +53,11 @@ size_t Partition::output_sampled_partitions(
       continue;
     }
 
-    partitions.insert(it->first);
+    PartitionID pid = it->first;
+    partitions.insert(pid);
 
     // create counting hash for this partition
-    CountingHash *chash = new CountingHash(k, (HashIntoType)1e5+3);
-    countinghash_map[it->first] = chash;
+    countinghash_map.emplace(std::piecewise_construct, std::forward_as_tuple(pid), std::forward_as_tuple(k, hashsize));
 
     cout << "including partition " << it->first << " in sample" << endl;
   }
@@ -114,11 +116,17 @@ size_t Partition::output_sampled_partitions(
       PartitionID partition_left;
       PartitionID partition_right;
       if (found_tags) {
-        partition_left = partition_map[kmer_left];
-        partition_right = partition_map[kmer_right];
-        if (partition_left == NULL || partition_right == NULL) {
+        PartitionID* partition_ptr_left;
+        PartitionID* partition_ptr_right;
+
+        partition_ptr_left = partition_map[kmer_left];
+        partition_ptr_right = partition_map[kmer_right];
+        if (partition_ptr_left == NULL || partition_ptr_right == NULL) {
           continue;
         }
+
+        partition_left = *partition_ptr_left;
+        partition_right = *partition_ptr_right;
       }
 
       // only write out if partition is in the sample
@@ -128,14 +136,21 @@ size_t Partition::output_sampled_partitions(
       if (leftfound || rightfound) {
 
         if (diginorm) {
-          bool left_pass = pass_coverage_filter(
-            read_left,
-            countinghash_map[partition_left]
-          );
-          bool right_pass = pass_coverage_filter(
-            read_right,
-            countinghash_map[partition_right]
-          );
+          bool left_pass = true;
+          bool right_pass = true;
+
+          // left
+          auto chl_find = countinghash_map.find(partition_left);
+          if (chl_find != countinghash_map.end()) {
+            left_pass = pass_coverage_filter(read_left, chl_find->second, k);
+          }
+
+          // right
+          auto chr_find = countinghash_map.find(partition_right);
+          if (chr_find != countinghash_map.end()) {
+            right_pass = pass_coverage_filter(read_right, chr_find->second, k);
+          }
+
           if (!(left_pass && right_pass)) {
             continue;
           }
@@ -165,7 +180,6 @@ size_t Partition::output_sampled_partitions(
     }
   }
 
-
   delete left_parser;
   left_parser = NULL;
   delete right_parser;
@@ -174,19 +188,17 @@ size_t Partition::output_sampled_partitions(
   return partitions.size();
 }
 
-bool Partition::pass_coverage_filter(Read read, CountingHash *hash) {
+bool Partition::pass_coverage_filter(Read& read, CountingHash& hash, int k) {
+
   BoundedCounterType mincov = 100;
   const char * kmer_s = read.sequence.c_str();
-  HashIntoType kmer = 0;
 
-  for (unsigned int i = 0; i < read.sequence.length() - hash->ksize() + 1; i++) {
-    kmer = _hash(kmer_s + i, hash->ksize());
+  for (unsigned int i = 0; i < read.sequence.length() - k + 1; i++) {
 
-    BoundedCounterType count = hash->get_count(kmer);
-    if (count < mincov) {
-      mincov = count;
-    }
+    BoundedCounterType count = hash.get_count(kmer_s);
+    mincov = min(count, mincov);
+
   }
 
-  return mincov > 20;
+  return mincov < 20;
 }

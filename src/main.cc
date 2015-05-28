@@ -55,7 +55,7 @@ int main (int argc, char* argv[]) {
 
     ValueArg<string> leftArg("l", "left", "Left read file in FASTQ format", true, "", "string", cmd);
 
-    SwitchArg normArg("d", "diginorm", "Digitally normalise the reads in each cluster to a minimum coverage of 20");
+    SwitchArg normArg("d", "diginorm", "Digitally normalise the reads in each cluster to a minimum coverage of 20", cmd);
 
 
     cmd.parse(argc, argv);

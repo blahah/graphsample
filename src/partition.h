@@ -27,7 +27,7 @@ namespace khmer {
       bool diginorm
     );
 
-    bool pass_coverage_filter(read_parsers::Read read, CountingHash *hash);
+    bool pass_coverage_filter(read_parsers::Read& read, CountingHash& hash, int k);
 
   };
 
