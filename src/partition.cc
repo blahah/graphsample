@@ -4,8 +4,7 @@
 #include <sstream>
 #include <errno.h>
 #include <chrono>
-
-#include "read_parsers.hh"
+#include <unordered_map>
 
 using namespace khmer;
 using namespace khmer::read_parsers;
@@ -17,7 +16,9 @@ size_t Partition::output_sampled_partitions(
     const string &out_left,
     const string &out_right,
     double rate,
-    int usrseed) {
+    int usrseed,
+    int k,
+    bool diginorm) {
 
   IParser* left_parser = IParser::get_parser(left);
   IParser* right_parser = IParser::get_parser(right);
@@ -38,6 +39,8 @@ size_t Partition::output_sampled_partitions(
   default_random_engine generator(seed);
   uniform_real_distribution<double> distribution(0.0, 1.0);
 
+  unordered_map <PartitionID, CountingHash*> countinghash_map;
+
   for(ReversePartitionMap::iterator it = reverse_pmap.begin();
       it != reverse_pmap.end(); ++it) {
 
@@ -49,6 +52,11 @@ size_t Partition::output_sampled_partitions(
     }
 
     partitions.insert(it->first);
+
+    // create counting hash for this partition
+    CountingHash *chash = new CountingHash(k, (HashIntoType)1e5+3);
+    countinghash_map[it->first] = chash;
+
     cout << "including partition " << it->first << " in sample" << endl;
   }
 
@@ -78,6 +86,7 @@ size_t Partition::output_sampled_partitions(
 
     if (_ht->check_and_normalize_read(seq_left) &&
         _ht->check_and_normalize_read(seq_right)) {
+
       const char * kmer_s_left = seq_left.c_str();
       const char * kmer_s_right = seq_right.c_str();
 
@@ -89,7 +98,6 @@ size_t Partition::output_sampled_partitions(
         // are these both known tags
         if (set_contains(partition_map, kmer_left)) {
           found_tags = true;
-          break;
         }
       }
 
@@ -103,8 +111,8 @@ size_t Partition::output_sampled_partitions(
         }
       }
 
-      PartitionID * partition_left;
-      PartitionID * partition_right;
+      PartitionID partition_left;
+      PartitionID partition_right;
       if (found_tags) {
         partition_left = partition_map[kmer_left];
         partition_right = partition_map[kmer_right];
@@ -114,10 +122,24 @@ size_t Partition::output_sampled_partitions(
       }
 
       // only write out if partition is in the sample
-      bool leftfound = partitions.find(*partition_left) != partitions.end();
-      bool rightfound = partitions.find(*partition_right) != partitions.end();
+      bool leftfound = partitions.find(partition_left) != partitions.end();
+      bool rightfound = partitions.find(partition_right) != partitions.end();
 
       if (leftfound || rightfound) {
+
+        if (diginorm) {
+          bool left_pass = pass_coverage_filter(
+            read_left,
+            countinghash_map[partition_left]
+          );
+          bool right_pass = pass_coverage_filter(
+            read_right,
+            countinghash_map[partition_right]
+          );
+          if (!(left_pass && right_pass)) {
+            continue;
+          }
+        }
 
         if (read_left.quality.length()) { // FASTQ
 
@@ -150,4 +172,21 @@ size_t Partition::output_sampled_partitions(
   right_parser = NULL;
 
   return partitions.size();
+}
+
+bool Partition::pass_coverage_filter(Read read, CountingHash *hash) {
+  BoundedCounterType mincov = 100;
+  const char * kmer_s = read.sequence.c_str();
+  HashIntoType kmer = 0;
+
+  for (unsigned int i = 0; i < read.sequence.length() - hash->ksize() + 1; i++) {
+    kmer = _hash(kmer_s + i, hash->ksize());
+
+    BoundedCounterType count = hash->get_count(kmer);
+    if (count < mincov) {
+      mincov = count;
+    }
+  }
+
+  return mincov > 20;
 }

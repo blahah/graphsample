@@ -4,6 +4,33 @@
 #include <tclap/CmdLine.h>
 
 using namespace TCLAP;
+using namespace std;
+
+class GraphSampleOutput : public StdOutput
+{
+  public:
+
+    virtual void usage(CmdLineInterface& c)
+    {
+      cout << endl << "graphsample - representative FASTQ sampling:" << endl;
+      cout << endl << "http://github.com/blahah/graphsample" << endl << endl;
+
+      list<Arg*> args = c.getArgList();
+      for (auto arg : args) {
+        if (arg->getName() == "ignore_rest") {
+          continue;
+        }
+        cout << "   " << arg->longID() << endl;
+        cout << "      " << arg->getDescription() << endl;
+        cout << endl;
+      }
+    }
+
+    virtual void version(CmdLineInterface& c)
+    {
+      cout << "graphsample v0.0.1" << endl;
+    }
+};
 
 int main (int argc, char* argv[]) {
 
@@ -13,6 +40,8 @@ int main (int argc, char* argv[]) {
 
     CmdLine cmd("graphsample - representative FASTQ sampling",
                 ' ', "0.0.1");
+    GraphSampleOutput helpmsg;
+		cmd.setOutput( &helpmsg );
 
     ValueArg<int> seedArg("s", "seed", "Random seed >= 0 (default uses time)", false, -1, "int", cmd);
 
@@ -20,30 +49,33 @@ int main (int argc, char* argv[]) {
 
     ValueArg<int> kArg("k", "wordsize", "Word size for building de-Bruijn graph (default 19)", false, 19, "int", cmd);
 
-    ValueArg<std::string> outputArg("o", "output", "Output file prefix (default sample)", false, "sampled", "string", cmd);
+    ValueArg<string> outputArg("o", "output", "Output file prefix (default sample)", false, "sampled", "string", cmd);
 
-    ValueArg<std::string> rightArg("r", "right", "Right read file in FASTQ format", true, "", "string", cmd);
+    ValueArg<string> rightArg("r", "right", "Right read file in FASTQ format", true, "", "string", cmd);
 
-    ValueArg<std::string> leftArg("l", "left", "Left read file in FASTQ format", true, "", "string", cmd);
+    ValueArg<string> leftArg("l", "left", "Left read file in FASTQ format", true, "", "string", cmd);
+
+    SwitchArg normArg("d", "diginorm", "Digitally normalise the reads in each cluster to a minimum coverage of 20");
 
 
     cmd.parse(argc, argv);
 
-    std::string left = leftArg.getValue();
-    std::string right = rightArg.getValue();
-    std::string output = outputArg.getValue();
+    string left = leftArg.getValue();
+    string right = rightArg.getValue();
+    string output = outputArg.getValue();
     int k = kArg.getValue();
     double rate = rateArg.getValue();
     int usrseed = seedArg.getValue();
+    bool diginorm = normArg.getValue();
 
     // run program
 
     GraphSample gs(left, right, output, k, rate);
-    gs.run(usrseed);
+    gs.run(usrseed, diginorm);
 
   } catch (ArgException &e) {
-    std::cerr << "ERROR: " << e.error() << " for argument " <<
-      e.argId() << std::endl;
+    cerr << "ERROR: " << e.error() << " for argument " <<
+      e.argId() << endl;
   }
 
 }

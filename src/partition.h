@@ -2,6 +2,8 @@
 
 #include "hashbits.hh"
 #include "subset.hh"
+#include "counting.hh"
+#include "read_parsers.hh"
 
 #ifndef PARTITION_H_
 #define PARTITION_H_
@@ -20,8 +22,13 @@ namespace khmer {
       const string &out_left,
       const string &out_right,
       double rate,
-      int usrseed
+      int usrseed,
+      int k,
+      bool diginorm
     );
+
+    bool pass_coverage_filter(read_parsers::Read read, CountingHash *hash);
+
   };
 
 }
