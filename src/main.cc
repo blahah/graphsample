@@ -14,17 +14,18 @@ int main (int argc, char* argv[]) {
     CmdLine cmd("graphsample - representative FASTQ sampling",
                 ' ', "0.0.1");
 
-    ValueArg<std::string> leftArg("l", "left", "Left read file in FASTQ format", true, "", "string", cmd);
+    ValueArg<int> seedArg("s", "seed", "Random seed >= 0 (default uses time)", false, -1, "int", cmd);
+
+    ValueArg<double> rateArg("a", "rate", "Rate at which to sample components [0.0, 1.0] (default 0.2)  ", false, 0.2, "double", cmd);
+
+    ValueArg<int> kArg("k", "wordsize", "Word size for building de-Bruijn graph (default 19)", false, 19, "int", cmd);
+
+    ValueArg<std::string> outputArg("o", "output", "Output file prefix (default sample)", false, "sampled", "string", cmd);
 
     ValueArg<std::string> rightArg("r", "right", "Right read file in FASTQ format", true, "", "string", cmd);
 
-    ValueArg<std::string> outputArg("o", "output", "Output file prefix", false, "sampled", "string", cmd);
+    ValueArg<std::string> leftArg("l", "left", "Left read file in FASTQ format", true, "", "string", cmd);
 
-    ValueArg<int> kArg("k", "wordsize", "Word size for building de-Bruijn graph", false, 19, "int", cmd);
-
-    ValueArg<double> rateArg("a", "rate", "Rate at which to sample components", false, 0.2, "double", cmd);
-
-    ValueArg<int> seedArg("s", "seed", "Random seed >= 0 (default uses time)", false, -1, "int", cmd);
 
     cmd.parse(argc, argv);
 
