@@ -24,6 +24,8 @@ int main (int argc, char* argv[]) {
 
     ValueArg<double> rateArg("a", "rate", "Rate at which to sample components", false, 0.2, "double", cmd);
 
+    ValueArg<int> seedArg("s", "seed", "Random seed >= 0 (default uses time)", false, -1, "int", cmd);
+
     cmd.parse(argc, argv);
 
     std::string left = leftArg.getValue();
@@ -31,11 +33,12 @@ int main (int argc, char* argv[]) {
     std::string output = outputArg.getValue();
     int k = kArg.getValue();
     double rate = rateArg.getValue();
+    int usrseed = seedArg.getValue();
 
     // run program
 
     GraphSample gs(left, right, output, k, rate);
-    gs.run();
+    gs.run(usrseed);
 
   } catch (ArgException &e) {
     std::cerr << "ERROR: " << e.error() << " for argument " <<

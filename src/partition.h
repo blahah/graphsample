@@ -19,7 +19,8 @@ namespace khmer {
       const string &right,
       const string &out_left,
       const string &out_right,
-      double rate
+      double rate,
+      int usrseed
     );
   };
 

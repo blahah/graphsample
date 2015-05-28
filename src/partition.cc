@@ -3,6 +3,7 @@
 #include <random>
 #include <sstream>
 #include <errno.h>
+#include <chrono>
 
 #include "read_parsers.hh"
 
@@ -15,7 +16,8 @@ size_t Partition::output_sampled_partitions(
     const string &right,
     const string &out_left,
     const string &out_right,
-    double rate) {
+    double rate,
+    int usrseed) {
 
   IParser* left_parser = IParser::get_parser(left);
   IParser* right_parser = IParser::get_parser(right);
@@ -27,7 +29,13 @@ size_t Partition::output_sampled_partitions(
   //
   // iterate through all partitions and sample them probabilistically
   //
-  default_random_engine generator;
+  unsigned seed;
+  if (usrseed > -1) {
+    seed = usrseed;
+  } else {
+    seed = std::chrono::system_clock::now().time_since_epoch().count();
+  }
+  default_random_engine generator(seed);
   uniform_real_distribution<double> distribution(0.0, 1.0);
 
   for(ReversePartitionMap::iterator it = reverse_pmap.begin();

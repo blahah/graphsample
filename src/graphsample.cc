@@ -16,7 +16,7 @@ string output_path_from_input(string &input, string &output) {
   return output + "." + filename;
 }
 
-void GraphSample::run(void) {
+void GraphSample::run(int usrseed) {
 
   // for now we set in stone, min_tables = 2 and hashsize = 4e9
   // we therefore want two primes > 4e9,
@@ -38,7 +38,7 @@ void GraphSample::run(void) {
   // subsample partitions and output reads
   string out_left = output_path_from_input(left, output);
   string out_right = output_path_from_input(right, output);
-  part.output_sampled_partitions(left, right,
-                                 out_left, out_right, rate);
+  part.output_sampled_partitions(left, right, out_left, out_right,
+                                 rate, usrseed);
 
 }

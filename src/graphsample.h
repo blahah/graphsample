@@ -19,7 +19,7 @@ public:
       double rate_
     ) : left(l), right(r), output(o), k(k_), rate(rate_) { };
 
-    void run(void);
+    void run(int usrseed);
 };
 
 #endif  // GRAPHSAMPLE_H_
