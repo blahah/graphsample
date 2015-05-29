@@ -19,7 +19,7 @@ public:
       double rate_
     ) : left(l), right(r), output(o), k(k_), rate(rate_) { };
 
-    void run(int usrseed);
+    void run(int usrseed, bool diginorm);
 };
 
 #endif  // GRAPHSAMPLE_H_
