@@ -16,6 +16,13 @@ namespace khmer {
   public:
     Partition(Hashtable * ht) : SubsetPartition(ht) {};
 
+    size_t output_partitions(
+      const string &left,
+      const string &right,
+      const string &out_left,
+      const string &out_right
+    );
+
     size_t output_sampled_partitions(
       const string &left,
       const string &right,
@@ -27,7 +34,16 @@ namespace khmer {
       bool diginorm
     );
 
-    bool pass_coverage_filter(read_parsers::Read& read, CountingHash& hash, int k);
+    size_t join_bridged_partitions(
+        const string &left,
+        const string &right
+    );
+
+    bool below_min_coverage(
+      read_parsers::Read& read,
+      CountingHash& hash,
+      int k
+    );
 
   };
 

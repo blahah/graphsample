@@ -6,6 +6,8 @@
 using namespace TCLAP;
 using namespace std;
 
+typedef unsigned int PartitionID;
+
 class GraphSampleOutput : public StdOutput
 {
   public:
@@ -57,6 +59,8 @@ int main (int argc, char* argv[]) {
 
     SwitchArg normArg("d", "diginorm", "Digitally normalise the reads in each cluster to a minimum coverage of 20", cmd);
 
+    SwitchArg partArg("p", "only-part", "Skip sampling step, and just output reads tagged with their partition", cmd);
+
 
     cmd.parse(argc, argv);
 
@@ -67,11 +71,12 @@ int main (int argc, char* argv[]) {
     double rate = rateArg.getValue();
     int usrseed = seedArg.getValue();
     bool diginorm = normArg.getValue();
+    bool onlypart = partArg.getValue();
 
     // run program
 
     GraphSample gs(left, right, output, k, rate);
-    gs.run(usrseed, diginorm);
+    gs.run(usrseed, diginorm, onlypart);
 
   } catch (ArgException &e) {
     cerr << "ERROR: " << e.error() << " for argument " <<
