@@ -37,7 +37,7 @@ void GraphSample::run(int usrseed, bool diginorm, bool only_part) {
   // partition
   Partition part(&htable);
   cout << "Partitioning graph" << endl;
-  part.do_partition(0, 0, false, false);
+  part.do_partition(0, 0, true, true);
   size_t n_partitions = 0;
   size_t n_unassigned = 0;
   part.count_partitions(n_partitions, n_unassigned);
