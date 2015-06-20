@@ -30,7 +30,7 @@ class GraphSampleOutput : public StdOutput
 
     virtual void version(CmdLineInterface& c)
     {
-      cout << "graphsample v0.0.1" << endl;
+      cout << "graphsample v0.0.2" << endl;
     }
 };
 
