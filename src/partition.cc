@@ -1,4 +1,5 @@
 #include "partition.h"
+#include "util.h"
 
 #include <random>
 #include <sstream>
@@ -136,7 +137,7 @@ size_t Partition::output_partitions(
       }
 
     } else {
-      cout << "ERROR: read failed check" << endl;
+      // cout << "ERROR: read failed check" << endl;
     }
   }
 
@@ -160,7 +161,7 @@ size_t Partition::output_partitions(
                  partitions_out.begin(), partitions_out.end(),
                  inserter(diff, diff.end()));
   for (auto& p : diff) {
-    cout << "Paritition ID " << p << " missing from output" << endl;
+    // cout << "Paritition ID " << p << " missing from output" << endl;
   }
 
   return partitions.size();
@@ -360,8 +361,8 @@ size_t Partition::output_sampled_partitions(
         }
       }
 
-    } else {
-      cout << "ERROR: read failed check" << endl;
+    // } else {
+    //   cout << "ERROR: read failed check" << endl;
     }
   }
 
@@ -380,13 +381,13 @@ size_t Partition::output_sampled_partitions(
   cout << "There were " << partitions_out.size() << " partitions in the output" << endl;
 
   // Difference between partitions sampled and written out?
-  set<unsigned int> diff;
-  set_difference(partitions.begin(), partitions.end(),
-                 partitions_out.begin(), partitions_out.end(),
-                 inserter(diff, diff.end()));
-  for (auto& p : diff) {
-    cout << "Paritition ID " << p << " missing from output" << endl;
-  }
+  // set<unsigned int> diff;
+  // set_difference(partitions.begin(), partitions.end(),
+  //                partitions_out.begin(), partitions_out.end(),
+  //                inserter(diff, diff.end()));
+  // for (auto& p : diff) {
+  //   cout << "Paritition ID " << p << " missing from output" << endl;
+  // }
 
   return partitions.size();
 }
