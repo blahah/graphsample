@@ -41,7 +41,7 @@ int main (int argc, char* argv[]) {
     // parse arguments
 
     CmdLine cmd("graphsample - representative FASTQ sampling",
-                ' ', "0.0.1");
+                ' ', "0.0.2");
     GraphSampleOutput helpmsg;
 		cmd.setOutput( &helpmsg );
 
