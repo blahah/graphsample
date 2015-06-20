@@ -25,13 +25,34 @@ void GraphSample::run(int usrseed, bool diginorm, bool only_part) {
   Hashbits htable(k, sizes);
   Partition part(&htable);
 
-  // load reads
-  unsigned long long n_consumed = 0;
-  unsigned int total_reads = 0;
-  htable.consume_fasta_and_tag(left, total_reads, n_consumed);
-  htable.consume_fasta_and_tag(right, total_reads, n_consumed);
-  cout << "Consumed " << n_consumed << " kmers from " << total_reads
-       << " read pairs" << endl;
+  string htableprefix = "countinghash";
+  string htable_out = output_path_from_input(left, htableprefix) + ".htable";
+
+  if (file_exists(htable_out)) {
+
+    cout << "Loading counting hash map from existing file" << endl;
+
+    try {
+      htable.load(htable_out);
+    } catch (exception &e) {
+      cerr << "ERROR loading counting hash map" << endl << e.what() << endl;
+      exit(1);
+    }
+
+  } else {
+
+    // load reads
+    unsigned long long n_consumed = 0;
+    unsigned int total_reads = 0;
+    htable.consume_fasta_and_tag(left, total_reads, n_consumed);
+    htable.consume_fasta_and_tag(right, total_reads, n_consumed);
+    cout << "Consumed " << n_consumed << " kmers from " << total_reads
+         << " read pairs" << endl;
+
+    htable.save(htable_out);
+
+  }
+
 
   string pmapprefix = "partitioned";
   string pmap_out = output_path_from_input(left, pmapprefix) + ".pmap";
