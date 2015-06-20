@@ -34,7 +34,7 @@ void GraphSample::run(int usrseed, bool diginorm, bool only_part) {
        << " read pairs" << endl;
 
   string pmapprefix = "partitioned";
-  string pmap_out = left + ".pmap";
+  string pmap_out = output_path_from_input(left, pmapprefix) + ".pmap";
 
   if (file_exists(pmap_out)) {
 
